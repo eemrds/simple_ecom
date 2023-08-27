@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException
 from fastapi.concurrency import run_in_threadpool
 
 from src.models import Product, CartItem
-from scripts.gen_products import create_mongo
+from src.db import create_mongo
 
 router = APIRouter()
 db = create_mongo()
@@ -11,27 +11,26 @@ db = create_mongo()
 
 @router.on_event("startup")
 async def startup():
-    db.products_collection.create_index("id", unique=True)
+    await db.products.create_index("id", unique=True)
 
-# @run_in_threadpool
-# def blocking_mongo_operation():
-#     create_mongo()
+@run_in_threadpool
+def blocking_mongo_operation():
+    create_mongo()
 
-# @router.get("/")
-# async def read_root():
-#     result = await blocking_mongo_operation()
-#     return {"result": result}
+@router.get("/")
+async def read_root():
+    result = await blocking_mongo_operation()
+    return {"result": result}
 
-# @router.get("/generate/", response_model=list[Product])
-# def insert_data():
-#     from scripts.gen_products import generate
-#     if db.count_documents({}) == 0:
-#         generate()
+@router.get("/generate/", response_model=list[Product])
+def insert_data():
+    from scripts.gen_products import generate
+    generate()
 
 @router.get("/products/", response_model=list[Product])
 async def get_products():
     try:
-        cursor = db.products_db.find({})
+        cursor = db.products.find({})
         products = [Product(id=str(item["_id"]), **item) for item in cursor]
         return products
     except Exception as e:

@@ -1,6 +1,8 @@
 
+import asyncio
 import os
 import motor.motor_asyncio
+from pymongo import MongoClient
 
 
 PRODUCT = [
@@ -12,45 +14,42 @@ PRODUCT = [
     },
     {
         "name": "OnePlus 2",
-        "price": 349,  # Price varies
+        "price": 349.00,  # Price varies
         "description": "Successor to the OnePlus One, promoted as the '2016 Flagship killer.'",
         "image": "https://www.oneplus.com/2"
     },
     {
         "name": "OnePlus 3",
-        "price": 399,  # Price varies
+        "price": 399.00,  # Price varies
         "description": "First OnePlus device not part of the invite system, featuring a Qualcomm Snapdragon 820 and 6 GB of RAM.",
         "image": "https://www.oneplus.com/3"
     },
     {
         "name": "OnePlus 5",
-        "price": 599,  # Price varies
+        "price": 599.00,  # Price varies
         "description": "Launched with a Qualcomm Snapdragon 835, a dual-lens camera setup, up to 8 GB RAM, and up to 128 GB of storage.",
         "image": "https://www.oneplus.com/5"
     },
     {
         "name": "OnePlus 5T",
-        "price": 549,  # Price varies
+        "price": 549.00,  # Price varies
         "description": "Successor to the OnePlus 5, featuring the same Qualcomm Snapdragon 835 SoC and storage options as its predecessor.",
         "image": "https://www.oneplus.com/5t"
     }
 ]
 
 def create_mongo():
-    client = motor.motor_asyncio.AsyncIOMotorClient(os.getenv("MONGO_CLIENT"))
-    db = client["productDatabase"]
-    collection = db["products"]
+    client = MongoClient("mongodb://mongo:27017/")  # Update the URI as needed
+    db = client['productDatabase']
+    collection = db['products']
     if collection.count_documents({}) == 0:
+        from scripts.gen_products import generate
         generate()
 
     return collection
 
-
-client = create_mongo()
-db = client["productDatabase"]
-collection = db["products"]
-
-
 def generate():
+    # from src.db import create_mongo
+    collection = create_mongo()
     for item in PRODUCT:
         collection.insert_one(item)
